@@ -1,2 +1,5 @@
 data/
 .ipynb_checkpoints/
+unsloth_compiled_cache/
+outputs/
+logs/

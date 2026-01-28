@@ -67,6 +67,7 @@ Each example contains:
 
 | Configuration | GPU | VRAM | Training Time (est.) |
 |--------------|-----|------|---------------------|
+| **Multi-GPU (Best)** | 8× NVIDIA A100 | 80GB each | ~20-30 minutes |
 | **Recommended** | NVIDIA A100 | 80GB | ~4-6 hours (standard) / ~2-3 hours (Unsloth) |
 | **Minimum** | NVIDIA A100 | 40GB | ~6-8 hours (smaller batch) |
 | **Alternative** | NVIDIA H100 | 80GB | ~2-3 hours (standard) / ~1-2 hours (Unsloth) |
@@ -102,12 +103,15 @@ nemotron-nano-v3-lora/
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb   # Load & format MedMCQA dataset
 │   ├── 02_model_loading.ipynb      # Load model with standard HuggingFace
-│   ├── 03_training.ipynb           # Train with TRL (baseline)
-│   └── 04_unsloth_optimization.ipynb  # Train with Unsloth (compare performance)
+│   ├── 03_training.ipynb           # Train with TRL (baseline, single GPU)
+│   └── 04_unsloth_training.ipynb   # Train with Unsloth (compare performance)
+├── scripts/
+│   └── train_multigpu.py     # Multi-GPU training script (DDP)
+├── logs/                     # Training logs
 ├── data/
 │   └── medmcqa_formatted/    # Preprocessed dataset (Arrow format)
 └── outputs/
-    └── checkpoints/          # Saved LoRA adapters
+    └── lora_adapter*/        # Saved LoRA adapters
 ```
 
 ## 🚀 Quick Start
@@ -127,9 +131,54 @@ uv sync
 # 4. Add dependencies as needed (we'll do this step-by-step)
 uv add datasets  # example: adds to pyproject.toml + installs
 
-# 5. Run scripts
-uv run python train.py
+# 5. Run notebooks or scripts
+uv run jupyter lab
 ```
+
+## 🚀 Multi-GPU Training (8× A100)
+
+For maximum speed, use Distributed Data Parallel (DDP) across all 8 GPUs:
+
+```bash
+# Create logs directory
+mkdir -p logs
+
+# Run training on 8 GPUs (background with logging)
+nohup uv run torchrun --nproc_per_node=8 scripts/train_multigpu.py > logs/training_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+```
+
+### Monitor Training
+
+```bash
+# Watch the log in real-time
+tail -f logs/training*.log
+
+# Check GPU utilization
+watch -n 1 nvidia-smi
+
+# Check if training is running
+ps aux | grep torchrun
+```
+
+### Training Configuration
+
+| Parameter | Value |
+|-----------|-------|
+| Per-device batch size | 4 |
+| Gradient accumulation | 4 |
+| Effective batch size | 4 × 4 × 8 = **128** |
+| Learning rate | 2e-4 |
+| Epochs | 1 |
+| Steps per epoch | ~1,428 |
+
+### DDP vs Model Parallelism
+
+| Mode | How it works | Speedup |
+|------|--------------|---------|
+| **Model Parallelism** (notebooks) | Model sharded across GPUs | Good for large models |
+| **Data Parallelism** (DDP script) | Each GPU processes different batches | **True 8x throughput** |
+
+The multi-GPU script uses DDP for true parallel training where each GPU processes different data batches simultaneously.
 
 ### Why uv?
 
