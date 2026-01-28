@@ -110,10 +110,12 @@ lora_alpha = 32  # Typically 2x rank
 
 ### `target_modules` - Where to Inject LoRA
 ```python
-target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+# For Nemotron-3-Nano (no gate_proj - different MLP architecture)
+target_modules = ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj"]
 ```
 - **What it does**: Specifies which weight matrices get LoRA adapters
 - **Common targets**: Attention projections (Q, K, V, O) and MLP layers
+- **Note**: Some models (like LLaMA) use `gate_proj` for SwiGLU gating; Nemotron-3-Nano does not
 - **Trade-off**: More modules = better adaptation, more memory
 
 ### `lora_dropout` - Regularization

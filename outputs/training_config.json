@@ -1,0 +1,21 @@
+{
+  "model_name": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16",
+  "lora_config": {
+    "r": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": [
+      "o_proj",
+      "down_proj",
+      "v_proj",
+      "up_proj",
+      "q_proj",
+      "k_proj"
+    ],
+    "task_type": "TaskType.CAUSAL_LM",
+    "bias": "none"
+  },
+  "training_config": {
+    "max_seq_length": 1024
+  }
+}
