@@ -1,0 +1,13 @@
+[project]
+name = "nemotron-nano-v3-lora"
+version = "0.1.0"
+description = "LoRA fine-tuning of Nemotron-3-Nano-30B on medical Q&A data"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { text = "MIT" }
+
+# Dependencies added incrementally as needed
+dependencies = []
+
+[tool.uv]
+python-preference = "system"
