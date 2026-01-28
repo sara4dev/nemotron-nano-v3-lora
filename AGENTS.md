@@ -2,6 +2,18 @@
 
 This document explains the technical architecture of LoRA fine-tuning for systems engineers transitioning to ML.
 
+## 📖 Learning Approach
+
+This project uses a **progressive approach**:
+
+1. **Notebooks 01-03**: Standard HuggingFace stack (Transformers + PEFT + TRL)
+2. **Notebook 04**: Add Unsloth optimization layer and compare performance
+
+This separation helps you understand:
+- What's "standard" vs "optimized"
+- How to debug issues at each layer
+- The actual performance gains from optimization libraries
+
 ## 🔧 What Problem Does LoRA Solve?
 
 ### The Full Fine-tuning Problem
@@ -249,6 +261,84 @@ After training, the model becomes a **Medical QA Agent**:
 | Loss plateaus early | LR too low | Increase `learning_rate` |
 | Eval loss diverges | Overfitting | Increase `lora_dropout`, reduce epochs |
 | OOM errors | Batch too large | Reduce `batch_size`, increase `gradient_accumulation` |
+
+## 🔀 Standard vs Unsloth Training
+
+### Standard HuggingFace (Notebooks 02-03)
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from peft import LoraConfig, get_peft_model
+from trl import SFTTrainer
+
+# Load model
+model = AutoModelForCausalLM.from_pretrained(
+    "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16",
+    torch_dtype=torch.bfloat16,
+    device_map="auto",
+)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# Add LoRA adapters
+lora_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    lora_dropout=0.05,
+    task_type="CAUSAL_LM",
+)
+model = get_peft_model(model, lora_config)
+
+# Train
+trainer = SFTTrainer(model=model, train_dataset=dataset, ...)
+trainer.train()
+```
+
+### With Unsloth Optimization (Notebook 04)
+
+```python
+from unsloth import FastLanguageModel  # <-- Different import
+from trl import SFTTrainer              # Same trainer!
+
+# Load model (Unsloth applies kernel optimizations)
+model, tokenizer = FastLanguageModel.from_pretrained(
+    "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16",
+    dtype=torch.bfloat16,
+    load_in_4bit=True,  # Optional: 4-bit quantization
+)
+
+# Add LoRA adapters (Unsloth wrapper)
+model = FastLanguageModel.get_peft_model(
+    model,
+    r=16,
+    lora_alpha=32,
+    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+    lora_dropout=0.05,
+)
+
+# Train (same SFTTrainer!)
+trainer = SFTTrainer(model=model, train_dataset=dataset, ...)
+trainer.train()
+```
+
+### What Unsloth Optimizes
+
+| Optimization | When Active | Benefit |
+|--------------|-------------|---------|
+| Fused attention kernels | Every forward pass | Fewer memory transfers |
+| Custom CUDA kernels | Every computation | 2-3x faster |
+| Gradient checkpointing | Every backward pass | ~50% less VRAM |
+| Optimized LoRA math | Every weight update | Faster convergence |
+
+### Expected Performance Comparison
+
+| Metric | Standard HuggingFace | With Unsloth |
+|--------|---------------------|--------------|
+| Training time | ~4-6 hours | ~2-3 hours |
+| Peak VRAM | ~60 GB | ~30-40 GB |
+| Batch size (A100 80GB) | 4 | 8 |
+
+> Note: Actual numbers depend on hardware, batch size, and sequence length.
 
 ## 🚀 Deployment Considerations
 

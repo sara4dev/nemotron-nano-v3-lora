@@ -1,6 +1,6 @@
 # Nemotron-3-Nano Medical LoRA Fine-tuning
 
-Fine-tuning NVIDIA's Nemotron-3-Nano-30B model on medical Q&A data using LoRA (Low-Rank Adaptation) with the Unsloth framework.
+Fine-tuning NVIDIA's Nemotron-3-Nano-30B model on medical Q&A data using LoRA (Low-Rank Adaptation).
 
 ## 🎯 Project Objective
 
@@ -8,6 +8,16 @@ Train a domain-specific medical assistant by fine-tuning the Nemotron-3-Nano bas
 - **Efficient training**: LoRA trains only ~0.1% of parameters (adapter layers) instead of full 30B weights
 - **Lower hardware requirements**: Fits on a single A100 80GB GPU
 - **Fast iteration**: Training completes in hours, not days
+
+## 📖 Learning Approach
+
+This project takes a **progressive approach** to help you understand each layer of the stack:
+
+1. **Start simple**: Train with standard HuggingFace (Transformers + PEFT + TRL)
+2. **Then optimize**: Add Unsloth to see the performance gains
+3. **Compare**: Measure the actual speedup on your hardware
+
+This makes it easier to debug issues and understand what's "standard" vs "optimized."
 
 ## 🧠 Model Overview
 
@@ -57,21 +67,30 @@ Each example contains:
 
 | Configuration | GPU | VRAM | Training Time (est.) |
 |--------------|-----|------|---------------------|
-| **Recommended** | NVIDIA A100 | 80GB | ~2-4 hours |
-| **Minimum** | NVIDIA A100 | 40GB | ~4-6 hours (smaller batch) |
-| **Alternative** | NVIDIA H100 | 80GB | ~1-2 hours |
+| **Recommended** | NVIDIA A100 | 80GB | ~4-6 hours (standard) / ~2-3 hours (Unsloth) |
+| **Minimum** | NVIDIA A100 | 40GB | ~6-8 hours (smaller batch) |
+| **Alternative** | NVIDIA H100 | 80GB | ~2-3 hours (standard) / ~1-2 hours (Unsloth) |
 
 > ⚠️ **Note**: Consumer GPUs (RTX 4090, etc.) may not have sufficient VRAM for this 30B model even with LoRA.
 
 ## 🛠️ Tech Stack
 
+### Core Stack (Standard HuggingFace)
+
 | Component | Purpose |
 |-----------|---------|
-| **[Unsloth](https://github.com/unslothai/unsloth)** | Optimized LoRA training (2-3x faster, 50% less memory) |
-| **[PEFT](https://github.com/huggingface/peft)** | Parameter-Efficient Fine-Tuning library |
 | **[Transformers](https://github.com/huggingface/transformers)** | Model loading and tokenization |
+| **[PEFT](https://github.com/huggingface/peft)** | Parameter-Efficient Fine-Tuning (LoRA) |
+| **[TRL](https://github.com/huggingface/trl)** | `SFTTrainer` for LLM fine-tuning |
 | **[Datasets](https://github.com/huggingface/datasets)** | Dataset loading and preprocessing |
-| **[TRL](https://github.com/huggingface/trl)** | Trainer for LLM fine-tuning |
+
+### Optional Optimization
+
+| Component | Purpose |
+|-----------|---------|
+| **[Unsloth](https://github.com/unslothai/unsloth)** | Drop-in optimization layer (2-3x faster, 50% less memory) |
+
+Unsloth is added later to demonstrate performance gains while keeping the core training logic unchanged.
 
 ## 📁 Project Structure
 
@@ -80,13 +99,13 @@ nemotron-nano-v3-lora/
 ├── README.md                 # This file
 ├── AGENTS.md                 # Architecture & methodology docs
 ├── pyproject.toml            # Project config & dependencies (uv)
-├── train.py                  # Main training script
-├── config/
-│   └── lora_config.yaml      # LoRA hyperparameters
-├── data/
-│   └── preprocess.py         # Data formatting utilities
 ├── notebooks/
-│   └── train_medical_lora.ipynb  # Interactive training notebook
+│   ├── 01_data_exploration.ipynb   # Load & format MedMCQA dataset
+│   ├── 02_model_loading.ipynb      # Load model with standard HuggingFace
+│   ├── 03_training.ipynb           # Train with TRL (baseline)
+│   └── 04_unsloth_optimization.ipynb  # Train with Unsloth (compare performance)
+├── data/
+│   └── medmcqa_formatted/    # Preprocessed dataset (Arrow format)
 └── outputs/
     └── checkpoints/          # Saved LoRA adapters
 ```
@@ -135,10 +154,15 @@ The LoRA adapters can be:
 
 ## 📚 Learning Resources
 
+### Core Concepts
+- [LoRA Paper](https://arxiv.org/abs/2106.09685) - Understanding Low-Rank Adaptation
+- [NVIDIA Nemotron Paper](https://arxiv.org/abs/2512.20848) - Model architecture
+- [TRL Documentation](https://huggingface.co/docs/trl) - SFTTrainer usage
+- [PEFT Documentation](https://huggingface.co/docs/peft) - LoRA configuration
+
+### Unsloth Optimization (Notebook 04)
 - [Unsloth Nemotron Guide](https://docs.unsloth.ai/models/nemotron-3)
 - [Reference Colab Notebook](https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/Nemotron-3-Nano-30B-A3B_A100.ipynb)
-- [NVIDIA Nemotron Paper](https://arxiv.org/abs/2512.20848)
-- [LoRA Paper](https://arxiv.org/abs/2106.09685)
 
 ## 📄 License
 
