@@ -52,7 +52,7 @@ NUM_EPOCHS = 1
 WARMUP_STEPS = 100
 
 # Unsloth-specific options
-LOAD_IN_4BIT = True  # Set to True to use 4-bit quantization (saves ~50% VRAM)
+LOAD_IN_4BIT = False  # Full BF16 precision (A100 80GB has enough VRAM)
 
 
 def main():
