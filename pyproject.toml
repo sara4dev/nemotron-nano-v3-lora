@@ -21,6 +21,13 @@ dependencies = [
     "trl>=0.27.1",
 ]
 
+[project.optional-dependencies]
+# Unsloth for 2-3x faster training (install with: uv pip install -e ".[unsloth]")
+unsloth = [
+    "unsloth>=2024.12",
+    "xformers",
+]
+
 [tool.uv]
 python-preference = "system"
 
