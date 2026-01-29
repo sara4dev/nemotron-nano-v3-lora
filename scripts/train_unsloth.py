@@ -32,12 +32,8 @@ from trl import SFTTrainer, SFTConfig
 # Configuration - Adjust these for your setup
 # =============================================================================
 
-# Model - use local cache path if available, otherwise HuggingFace ID
-_HF_MODEL_ID = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16"
-_LOCAL_CACHE_PATH = os.path.expanduser(
-    "~/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16/snapshots/f73a11c1f0964a5851f984b70cd31dda9a44f01c"
-)
-MODEL_NAME = _LOCAL_CACHE_PATH if os.path.exists(_LOCAL_CACHE_PATH) else _HF_MODEL_ID
+# Model - using Instruct model for better instruction-following (already knows chat format)
+MODEL_NAME = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16"
 MAX_SEQ_LENGTH = 2048
 
 # LoRA Configuration
