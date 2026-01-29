@@ -3,10 +3,10 @@
 Multi-GPU Training Script with Unsloth Optimization
 
 Launch with:
-    torchrun --nproc_per_node=8 scripts/train_unsloth.py
+    torchrun --nproc_per_node=4 scripts/train_unsloth.py
 
 Or with accelerate:
-    accelerate launch --num_processes=8 scripts/train_unsloth.py
+    accelerate launch --num_processes=4 scripts/train_unsloth.py
 
 This uses Unsloth's optimized kernels for 2-3x faster training.
 Compatible with DDP across multiple GPUs.
@@ -46,17 +46,18 @@ LORA_ALPHA = 32
 LORA_DROPOUT = 0.05
 TARGET_MODULES = ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj"]
 
-# Training Configuration for A100 80GB (8 GPUs)
+# Training Configuration for B300 288GB (4 GPUs)
 # Effective batch size = per_device * gradient_accumulation * num_gpus
-# Example: 2 * 8 * 8 = 128
-PER_DEVICE_BATCH_SIZE = 2  # Conservative for A100 80GB
-GRADIENT_ACCUMULATION_STEPS = 8
+# Example: 32 * 2 * 4 = 256
+PER_DEVICE_BATCH_SIZE = 32  # B300 288GB can handle large batches
+GRADIENT_ACCUMULATION_STEPS = 2
 LEARNING_RATE = 2e-4
 NUM_EPOCHS = 1
 WARMUP_STEPS = 100
 
 # Unsloth-specific options
-LOAD_IN_4BIT = True  # Required - model too large for BF16 on single GPU
+# B300 has enough VRAM for BF16, keeping 4-bit disabled for better quality
+LOAD_IN_4BIT = False
 
 
 def main():
@@ -318,7 +319,7 @@ def main():
             },
             "hardware": {
                 "num_gpus": world_size,
-                "gpu_type": "A100-80GB",
+                "gpu_type": "B300-288GB",
             },
         }
         with open(info_path, "w") as f:
