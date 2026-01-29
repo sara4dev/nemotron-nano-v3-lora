@@ -22,6 +22,8 @@ import time
 from pathlib import Path
 
 import torch
+# Import Unsloth - this applies kernel optimizations automatically
+from unsloth import FastLanguageModel
 from datasets import load_from_disk
 from huggingface_hub import login
 from trl import SFTTrainer, SFTConfig
@@ -97,9 +99,6 @@ def main():
     
     if local_rank == 0:
         print(f"⏳ Loading model with Unsloth optimizations...")
-    
-    # Import Unsloth - this applies kernel optimizations automatically
-    from unsloth import FastLanguageModel
     
     # Unsloth's optimized model loading
     # - Applies fused attention kernels
