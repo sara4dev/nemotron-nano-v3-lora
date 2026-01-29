@@ -115,6 +115,10 @@ def main():
     # Use local_files_only if HF_HUB_OFFLINE is set to avoid network calls
     local_only = os.environ.get("HF_HUB_OFFLINE", "0") == "1"
     
+    # For quantized models with DDP, we must specify device_map to load on correct GPU
+    # Each rank loads the model on its own GPU
+    device_map = {"": f"cuda:{local_rank}"}
+    
     model, tokenizer = FastLanguageModel.from_pretrained(
         MODEL_NAME,
         max_seq_length=MAX_SEQ_LENGTH,
@@ -122,7 +126,7 @@ def main():
         load_in_4bit=LOAD_IN_4BIT,
         trust_remote_code=True,
         local_files_only=local_only,
-        # Note: Don't use device_map for DDP - let torchrun handle placement
+        device_map=device_map,  # Required for quantized models with DDP
     )
     
     # Set padding token

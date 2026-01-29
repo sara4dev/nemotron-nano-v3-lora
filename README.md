@@ -106,7 +106,8 @@ nemotron-nano-v3-lora/
 │   ├── 03_training.ipynb           # Train with TRL (baseline, single GPU)
 │   └── 04_unsloth_training.ipynb   # Train with Unsloth (compare performance)
 ├── scripts/
-│   └── train_multigpu.py     # Multi-GPU training script (DDP)
+│   ├── train_multigpu.py     # Multi-GPU training script (DDP, standard HuggingFace)
+│   └── train_unsloth.py      # Multi-GPU training with Unsloth optimization (2-3x faster)
 ├── logs/                     # Training logs
 ├── data/
 │   └── medmcqa_formatted/    # Preprocessed dataset (Arrow format)
@@ -135,14 +136,27 @@ uv add datasets  # example: adds to pyproject.toml + installs
 uv run jupyter lab
 ```
 
-## 🚀 Multi-GPU Training (8× A100)
+## 🚀 Multi-GPU Training
 
-For maximum speed, use Distributed Data Parallel (DDP) across all 8 GPUs:
+For maximum speed, use Distributed Data Parallel (DDP) across all GPUs.
+
+### Option 1: Unsloth-Optimized Training (Recommended)
+
+2-3x faster training with optimized CUDA kernels:
 
 ```bash
 # Create logs directory
 mkdir -p logs
 
+# Run training with Unsloth (4 GPUs example)
+nohup uv run torchrun --nproc_per_node=4 scripts/train_unsloth.py > logs/training_unsloth_$(date +%Y%m%d_%H%M%S).log 2>&1 &
+```
+
+### Option 2: Standard HuggingFace Training
+
+Baseline training without Unsloth (useful for debugging):
+
+```bash
 # Run training on 8 GPUs (background with logging)
 nohup uv run torchrun --nproc_per_node=8 scripts/train_multigpu.py > logs/training_$(date +%Y%m%d_%H%M%S).log 2>&1 &
 ```
@@ -162,14 +176,14 @@ ps aux | grep torchrun
 
 ### Training Configuration
 
-| Parameter | Value |
-|-----------|-------|
-| Per-device batch size | 4 |
-| Gradient accumulation | 4 |
-| Effective batch size | 4 × 4 × 8 = **128** |
-| Learning rate | 2e-4 |
-| Epochs | 1 |
-| Steps per epoch | ~1,428 |
+| Parameter | Standard (`train_multigpu.py`) | Unsloth (`train_unsloth.py`) |
+|-----------|-------------------------------|------------------------------|
+| Per-device batch size | 4 | 32 |
+| Gradient accumulation | 4 | 2 |
+| Effective batch size (4 GPUs) | 4 × 4 × 4 = **64** | 32 × 2 × 4 = **256** |
+| Optimizer | AdamW 8-bit | AdamW 8-bit |
+| Learning rate | 2e-4 | 2e-4 |
+| Epochs | 1 | 1 |
 
 ### DDP vs Model Parallelism
 
@@ -179,6 +193,8 @@ ps aux | grep torchrun
 | **Data Parallelism** (DDP script) | Each GPU processes different batches | **True 8x throughput** |
 
 The multi-GPU script uses DDP for true parallel training where each GPU processes different data batches simultaneously.
+
+> **Note**: When using quantized models (4-bit/8-bit) with DDP, each rank must load the model on its own GPU using `device_map={"": f"cuda:{local_rank}"}`. The `train_unsloth.py` script handles this automatically.
 
 ### Why uv?
 
