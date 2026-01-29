@@ -52,7 +52,7 @@ NUM_EPOCHS = 1
 WARMUP_STEPS = 100
 
 # Unsloth-specific options
-LOAD_IN_4BIT = False  # Full BF16 precision (A100 80GB has enough VRAM)
+LOAD_IN_4BIT = True  # Required - model too large for BF16 on single GPU
 
 
 def main():
