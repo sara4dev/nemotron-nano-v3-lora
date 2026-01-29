@@ -7,18 +7,13 @@ requires-python = ">=3.10,<3.13"
 license = { text = "MIT" }
 
 # Dependencies added incrementally as needed
+# Let unsloth manage transformers/trl/peft versions for compatibility
 dependencies = [
-    "accelerate>=1.12.0",
-    "bitsandbytes>=0.49.1",
-    "datasets==4.3.0",  # Unsloth requires 4.3.0 (4.5.0 causes recursion errors)
     "ipykernel>=7.1.0",
     "mamba-ssm>=2.3.0",
-    "peft>=0.18.1",
     "tensorboardx>=2.6.4",
     "torch>=2.9.0",
-    "tqdm>=4.67.1",
-    "transformers>=5.0.0",
-    "trl>=0.27.1",
+    "unsloth>=2026.1.4",  # Latest unsloth - manages its own deps
 ]
 
 [project.optional-dependencies]
