@@ -32,8 +32,12 @@ from trl import SFTTrainer, SFTConfig
 # Configuration - Adjust these for your setup
 # =============================================================================
 
-# Model
-MODEL_NAME = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16"
+# Model - use local cache path if available, otherwise HuggingFace ID
+_HF_MODEL_ID = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16"
+_LOCAL_CACHE_PATH = os.path.expanduser(
+    "~/.cache/huggingface/hub/models--nvidia--NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16/snapshots/f73a11c1f0964a5851f984b70cd31dda9a44f01c"
+)
+MODEL_NAME = _LOCAL_CACHE_PATH if os.path.exists(_LOCAL_CACHE_PATH) else _HF_MODEL_ID
 MAX_SEQ_LENGTH = 2048
 
 # LoRA Configuration
@@ -60,10 +64,13 @@ def main():
     # 1. Setup
     # =========================================================================
     
-    # Authenticate with HuggingFace
-    if os.environ.get("HF_TOKEN"):
-        login(token=os.environ["HF_TOKEN"])
-        print("✅ Logged in to HuggingFace Hub")
+    # Authenticate with HuggingFace (skip if offline mode or rate-limited)
+    if os.environ.get("HF_TOKEN") and not os.environ.get("HF_HUB_OFFLINE"):
+        try:
+            login(token=os.environ["HF_TOKEN"])
+            print("✅ Logged in to HuggingFace Hub")
+        except Exception as e:
+            print(f"⚠️  HuggingFace login failed (will use cached model): {e}")
     
     # Get distributed training info
     local_rank = int(os.environ.get("LOCAL_RANK", 0))
@@ -104,12 +111,16 @@ def main():
     # - Applies fused attention kernels
     # - Enables efficient gradient checkpointing
     # - Optional 4-bit quantization
+    # Use local_files_only if HF_HUB_OFFLINE is set to avoid network calls
+    local_only = os.environ.get("HF_HUB_OFFLINE", "0") == "1"
+    
     model, tokenizer = FastLanguageModel.from_pretrained(
         MODEL_NAME,
         max_seq_length=MAX_SEQ_LENGTH,
         dtype=torch.bfloat16,
         load_in_4bit=LOAD_IN_4BIT,
         trust_remote_code=True,
+        local_files_only=local_only,
         # Note: Don't use device_map for DDP - let torchrun handle placement
     )
     
