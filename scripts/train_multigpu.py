@@ -121,9 +121,9 @@ def main():
         
         # Batch size - this is PER GPU
         # Effective batch size = per_device_batch_size * gradient_accumulation * num_gpus
-        # Example: 8 * 4 * 8 = 256 (H200 140GB)
-        per_device_train_batch_size=8,
-        per_device_eval_batch_size=8,
+        # Example: 4 * 4 * 8 = 128 (H200 140GB - model uses ~103GB base)
+        per_device_train_batch_size=4,
+        per_device_eval_batch_size=4,
         gradient_accumulation_steps=4,
         
         # Learning rate
