@@ -45,7 +45,7 @@ TARGET_MODULES = ["q_proj", "k_proj", "v_proj", "o_proj", "up_proj", "down_proj"
 # Training Configuration for B300 288GB (4 GPUs)
 # Effective batch size = per_device * gradient_accumulation * num_gpus
 # Example: 16 * 4 * 4 = 256
-PER_DEVICE_BATCH_SIZE = 16  # Reduced from 32 to fit in 267 GiB available VRAM
+PER_DEVICE_BATCH_SIZE = 8  # Reduced from 32 to fit in 267 GiB available VRAM
 GRADIENT_ACCUMULATION_STEPS = 4  # Increased to maintain effective batch size of 256
 LEARNING_RATE = 2e-4
 NUM_EPOCHS = 1
