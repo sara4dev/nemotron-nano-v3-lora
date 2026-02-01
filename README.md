@@ -15,6 +15,7 @@ Evaluated on MedMCQA validation set (4,183 samples). See [full results](#evaluat
 | | |
 |---|---|
 | **Base Model** | [nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16](https://huggingface.co/nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-Base-BF16) |
+| **Trained LoRA** | [sara4dev/unsloth-nemotron-3-nano-medical-qa-lora](https://huggingface.co/sara4dev/unsloth-nemotron-3-nano-medical-qa-lora) |
 | **Architecture** | Mamba2-Transformer Hybrid MoE (30B total, ~3B active) |
 | **Dataset** | [openlifescienceai/medmcqa_formatted](https://huggingface.co/datasets/openlifescienceai/medmcqa_formatted) |
 | **Task** | Medical multiple-choice QA |
